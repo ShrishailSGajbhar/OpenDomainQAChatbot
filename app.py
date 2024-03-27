@@ -44,21 +44,25 @@ def chatbot_page():
     if len(prompt)>0 and submit_btn:
         st.session_state['messages'].append({"role":"user", "content":prompt})
         message(message=prompt, is_user=True)
+        try:
+            if st.session_state['kb']=="Wikipedia":
+                url = "http://localhost:5000/get_wiki_answer"
+                response = requests.post(url=url, json={"question":prompt}).json()
+                output = f"Answer: {response[0]['answer']}, Confidence Score:{str(round(response[0]['score'],2))}"
+                print(output)
+                message(message=output, is_user=False)
+            elif st.session_state['kb']=="Google":
+                url = "http://localhost:5000/get_google_answer"
+                response = requests.post(url=url, json={"question":prompt}).json()
+                output = f"Answer: {response[0]['answer']}, Confidence Score:{str(round(response[0]['score'],2))}"
+                print(output)
+                message(message=output, is_user=False)
 
-        if st.session_state['kb']=="Wikipedia":
-            url = "http://localhost:5000/get_wiki_answer"
-            response = requests.post(url=url, json={"question":prompt}).json()
-            output = f"Answer: {response[0]['answer']}, Confidence Score:{str(round(response[0]['score'],2))}"
-            message(message=output, is_user=False)
-        else:
-            url = "http://localhost:5000/get_google_answer"
-            response = requests.post(url=url, json={"query":prompt}).json()
-            output = response['response']
-            message(message=output, is_user=False)
-
-        st.session_state['messages'].append({"role":"assistant", "content":output})
-    
-    
+        except:
+             output = "Some error occured..Pls try again"
+             message(message=output, is_user=False)   
+        
+        st.session_state['messages'].append({"role":"assistant", "content":output})        
 
 def main():
     st.set_page_config(page_title="Open Domain Question Answering Chatbot", layout="wide")

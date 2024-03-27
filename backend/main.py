@@ -2,7 +2,8 @@ import os
 
 import spacy
 from flask import Flask, render_template, jsonify, request
-
+from ggle.get_paragraphs import Paragraphs
+from ggle.get_most_relevant import RelevantParagraphExtracter
 from wiki.components import QueryProcessor, DocumentRetrieval, PassageRetrieval, AnswerExtractor
 
 app = Flask(__name__)
@@ -21,7 +22,7 @@ def index():
 
 
 @app.route('/get_wiki_answer', methods=['POST'])
-def analyzer():
+def wiki_analyzer():
     data = request.get_json()
     question = data.get('question')
 
@@ -33,9 +34,17 @@ def analyzer():
     return jsonify(answers)
 
 
-# @app.post("/get_google_answer")
-# def google_response(question:Question):
-#     return {"response": f"Google answer for {question.query}: "}
+@app.route('/get_google_answer', methods=['POST'])
+def google_analyzer():
+    data = request.get_json()
+    question = data.get('question')
+    query = query_processor.generate_query(question)
+    p = Paragraphs(query)
+    extractor = RelevantParagraphExtracter(p.all_paras,20, nlp)
+    passages = extractor.extract_most_relevant(question)
+    answers = answer_extractor.extract(question, passages)
+    print(answers)
+    return jsonify(answers)
 
 if __name__ == '__main__':
     app.run()
